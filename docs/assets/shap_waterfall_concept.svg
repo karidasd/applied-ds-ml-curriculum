@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 500" width="100%" height="100%" style="background:#0f172a; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <!-- Title -->
+  <text x="475" y="42" text-anchor="middle" fill="#f8fafc" font-size="22" font-weight="700">Explainable AI (XAI): SHAP Attribution &amp; Business Action Matrix</text>
+  <text x="475" y="68" text-anchor="middle" fill="#94a3b8" font-size="13">Deconstructing individual customer churn probability into actionable retention playbooks</text>
+
+  <!-- Left Container: Local Waterfall Plot -->
+  <g transform="translate(60, 95)">
+    <rect width="440" height="370" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="25" y="35" fill="#f8fafc" font-size="15" font-weight="600">Local SHAP Waterfall (Customer #CUST-00042)</text>
+    <text x="25" y="55" fill="#38bdf8" font-size="12" font-weight="bold">Base Value: E[f(x)] = 0.22  ⟶  Predicted Risk: f(x) = 0.82</text>
+
+    <!-- Bar 1: Usage Drop -->
+    <text x="25" y="95" fill="#cbd5e1" font-size="12">usage_drop_pct_last_30d = +0.45</text>
+    <rect x="25" y="105" width="390" height="26" rx="4" fill="#334155"/>
+    <rect x="180" y="105" width="190" height="26" rx="4" fill="#ef4444"/>
+    <text x="375" y="123" fill="#ffffff" font-size="11" font-weight="bold">+0.32</text>
+
+    <!-- Bar 2: Contract Type -->
+    <text x="25" y="155" fill="#cbd5e1" font-size="12">contract_type = Month-to-month</text>
+    <rect x="25" y="165" width="390" height="26" rx="4" fill="#334155"/>
+    <rect x="180" y="165" width="130" height="26" rx="4" fill="#ef4444"/>
+    <text x="315" y="183" fill="#ffffff" font-size="11" font-weight="bold">+0.21</text>
+
+    <!-- Bar 3: Support Tickets -->
+    <text x="25" y="215" fill="#cbd5e1" font-size="12">num_support_tickets = 4</text>
+    <rect x="25" y="225" width="390" height="26" rx="4" fill="#334155"/>
+    <rect x="180" y="225" width="95" height="26" rx="4" fill="#ef4444"/>
+    <text x="280" y="243" fill="#ffffff" font-size="11" font-weight="bold">+0.14</text>
+
+    <!-- Bar 4: Tenure (Mitigating) -->
+    <text x="25" y="275" fill="#cbd5e1" font-size="12">tenure_months = 18</text>
+    <rect x="25" y="285" width="390" height="26" rx="4" fill="#334155"/>
+    <rect x="120" y="285" width="60" height="26" rx="4" fill="#10b981"/>
+    <text x="95" y="303" fill="#a7f3d0" font-size="11" font-weight="bold">-0.07</text>
+
+    <!-- Final Score Indicator -->
+    <rect x="25" y="325" width="390" height="30" rx="6" fill="#450a0a" stroke="#ef4444" stroke-width="1"/>
+    <text x="220" y="345" text-anchor="middle" fill="#fca5a5" font-size="12" font-weight="bold">Final Risk Probability: 82.4% (Critical Tier)</text>
+  </g>
+
+  <!-- Right Container: Automated Playbook Routing -->
+  <g transform="translate(530, 95)">
+    <rect width="360" height="370" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="25" y="35" fill="#f8fafc" font-size="15" font-weight="600">Automated Retention Playbook Engine</text>
+    <text x="25" y="55" fill="#94a3b8" font-size="12">Mapping top SHAP driver to intervention</text>
+
+    <!-- Step 1 Card -->
+    <rect x="20" y="85" width="320" height="70" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1"/>
+    <text x="35" y="110" fill="#38bdf8" font-size="12" font-weight="bold">TOP DRIVER IDENTIFIED</text>
+    <text x="35" y="130" fill="#e2e8f0" font-size="13" font-weight="600">usage_drop_pct_last_30d (+0.32)</text>
+    <text x="35" y="145" fill="#94a3b8" font-size="11">Diagnostic: Behavioral abandonment</text>
+
+    <!-- Arrow -->
+    <text x="180" y="178" text-anchor="middle" fill="#38bdf8" font-size="18">↓</text>
+
+    <!-- Step 2 Card -->
+    <rect x="20" y="195" width="320" height="85" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+    <text x="35" y="220" fill="#34d399" font-size="12" font-weight="bold">TRIGGERED RETENTION PLAYBOOK</text>
+    <text x="35" y="240" fill="#ffffff" font-size="13" font-weight="700">Playbook A: Re-Engagement Tour</text>
+    <text x="35" y="258" fill="#a7f3d0" font-size="11">• Automated in-app feature adoption guide</text>
+    <text x="35" y="272" fill="#a7f3d0" font-size="11">• CS Check-in email with usage analytics</text>
+
+    <!-- ROI Note -->
+    <rect x="20" y="300" width="320" height="55" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="35" y="322" fill="#fbbf24" font-size="11" font-weight="bold">💡 Commercial Impact:</text>
+    <text x="35" y="340" fill="#e2e8f0" font-size="11">Avoids wasting a $60 discount on a user who</text>
+    <text x="35" y="354" fill="#e2e8f0" font-size="11">only needed workflow onboarding assistance.</text>
+  </g>
+</svg>

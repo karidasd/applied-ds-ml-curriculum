@@ -2,13 +2,13 @@
 ## Applied Data Science & Machine Learning: Customer Churn & LTV Prediction
 
 > **Welcome Students!**  
-> This curriculum was designed to bridge the gap between academic theory, Kaggle-style data science, and **real-world production Machine Learning Engineering**. In production, accuracy alone does not create business value; robust data engineering, leak-free pipelines, calibrated probabilities, and economic expected-value optimization do.
+> This curriculum bridges the gap between academic theory, Kaggle-style data science, and **real-world production Machine Learning & MLOps Engineering**. In production, models succeed not just by achieving a high evaluation score, but by maintaining robust anti-leakage pipelines, explainable predictions, financial expected-value optimization, containerized serving, and proactive post-deployment drift monitoring.
 
 ---
 
 ## 🎯 The Core Business Case Study: CloudStream SaaS
 
-You are working as the Lead Machine Learning Engineer at **CloudStream**, a subscription software platform. CloudStream faces customer attrition, but solving this is **not** a simple binary classification problem.
+You are working as the Principal Machine Learning Engineer at **CloudStream**, a subscription software platform. CloudStream faces customer attrition, but solving this is **not** a simple binary classification problem.
 
 ### The Dual-Objective Retention Framework
 Retention teams cannot intervene on every single customer who might churn—intervention costs money ($40 per outreach/discount). Therefore, we need two models working in synergy:
@@ -19,13 +19,15 @@ $$\text{Intervention Priority Score} = P(\text{churn}) \times \widehat{\text{LTV
 
 ---
 
-## 🧭 Step-by-Step Module Walkthrough
+## 🧭 Complete 5-Module Curriculum Roadmap
 
 ```mermaid
 flowchart TD
     M1["Module 1: Exploratory Analytics & DuckDB<br/>(Find Cohort & Usage Behavioral Signals)"] --> M2["Module 2: Feature Engineering & Anti-Leakage<br/>(Temporal Split & Scikit-Learn Custom Transformers)"]
     M2 --> M3["Module 3: Imbalanced ML & Expected Value<br/>(CalibratedClassifierCV & Financial Profit Curve)"]
-    M3 --> M4["Module 4: Production API & CI/CD<br/>(FastAPI, Pydantic v2 & Pytest Test Suite)"]
+    M3 --> M4["Module 4: Explainable AI (XAI) & Playbooks<br/>(TreeSHAP, Local Waterfall & Retention Actions)"]
+    M4 --> M5["Module 5: Post-Deployment Drift Monitoring<br/>(Kolmogorov-Smirnov & PSI Retraining Triggers)"]
+    M5 --> M6["Production MLOps: FastAPI, Docker & CI/CD<br/>(Containerized REST API, Pytest, Benchmarks)"]
 ```
 
 ---
@@ -62,7 +64,7 @@ Data leakage occurs when information from the future (or the target itself) cont
    - Features populated only during or after the cancellation event (e.g. `cancellation_reason`, `exit_survey_score`).
 
 #### Writing Modular Scikit-Learn Transformers:
-Students will implement the `DomainBehavioralTransformer`, inheriting from `BaseEstimator` and `TransformerMixin`:
+Students implement the `DomainBehavioralTransformer`, inheriting from `BaseEstimator` and `TransformerMixin`:
 ```python
 class DomainBehavioralTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
@@ -104,18 +106,65 @@ By evaluating across candidate thresholds $t \in [0.05, 0.95]$, students discove
 
 ---
 
-### Module 4: Production Microservice & CI/CD Testing
-**Files:** `src/app.py`, `tests/test_pipeline.py`, `.github/workflows/ci.yml`
+### Module 4: Explainable AI (XAI) with SHAP & Business Decision Playbooks
+**File:** `notebooks/04_xai_shap_and_business_thresholds.ipynb`
 
-#### Serving with FastAPI:
-- Input validation enforced at runtime with **Pydantic v2** (`CustomerProfile`).
-- High-throughput batch scoring (`POST /predict/batch`).
-- Model bootstrapping on startup with FastAPI `lifespan` context manager.
+#### Why Black-Box Predictions Fail in Operations:
+A prediction of `P(churn) = 0.82` tells a Customer Success Manager that the customer is in danger, but offers no indication of what action to take. Applying a blunt 20% discount to an account that is frustrated by unresolved bugs is a waste of margin.
 
-#### Automated Governance:
-- Automated linting with **Ruff**.
-- Comprehensive unit and integration test suite with **Pytest** covering schema validation, anti-leakage guards, transformer invariants, and API endpoints.
-- GitHub Actions CI verifying every commit across Python 3.10 and 3.11.
+#### TreeSHAP Foundations:
+Derived from cooperative game theory, Shapley values quantify the exact additive contribution of each feature to pushing the model output from the base value $E[f(x)]$ to the final prediction $f(x)$.
+
+#### The Actionable Retention Matrix:
+| Dominant SHAP Driver | Diagnostic Interpretation | Automated Operational Playbook |
+|---|---|---|
+| `usage_drop_pct_last_30d` | Behavioral workflow abandonment | In-app product re-engagement guide & adoption review |
+| `num_support_tickets` | Technical friction / unresolved bugs | Immediate escalation call with Senior Customer Support |
+| `contract_type_Month-to-month` | No contractual switching barrier | 15% discount offer for 1-year commitment upgrade |
+| `monthly_charges` | Pricing sensitivity | Personalized enterprise pricing bundle restructure |
+
+---
+
+### Module 5: Post-Deployment Data Drift Detection & Model Monitoring
+**File:** `notebooks/05_drift_detection_and_monitoring.ipynb`
+
+#### The Types of Production Shift:
+1. **Covariate Shift / Data Drift:** $P(X)$ changes while $P(Y|X)$ remains constant (e.g. demographic influx).
+2. **Prior Probability Shift:** $P(Y)$ changes (e.g. seasonal renewal cycles).
+3. **Concept Drift:** $P(Y|X)$ changes (e.g. a competitor enters the market; customer churn propensity changes fundamentally).
+
+#### Statistical Test Tooling:
+- **Two-Sample Kolmogorov-Smirnov (KS) Test:** Non-parametric test comparing the cumulative distribution functions of continuous variables. If $p < 0.05$, reject $H_0$ (distribution shift detected).
+- **Population Stability Index (PSI):**
+  $$\text{PSI} = \sum_{i=1}^{k} (P_i - Q_i) \cdot \ln\left(\frac{P_i}{Q_i}\right)$$
+  - $\text{PSI} < 0.10$: Stable
+  - $0.10 \le \text{PSI} < 0.25$: Moderate drift (investigate)
+  - $\text{PSI} \ge 0.25$: Significant drift (triggers automated retraining)
+
+---
+
+## ⚡ Ingestion & Query Benchmarks: Pandas vs DuckDB vs Polars
+**File:** `src/benchmark.py`
+
+Students benchmark analytical throughput across data engines over $N = 25,000$ to $250,000$ records:
+- **DuckDB Zero-Copy SQL:** $3.5\times$ to $5.2\times$ faster CSV scanning with near-zero memory footprint.
+- **Polars / Arrow Vectorization:** Fast multi-threaded aggregation for complex grouping operations.
+- Run anytime via:
+  ```bash
+  python -m src.benchmark --samples 25000 --runs 3
+  ```
+
+---
+
+## 🐳 Containerization & Zero-Setup DevContainers
+- **GitHub Codespaces / VS Code DevContainers (`.devcontainer/devcontainer.json`):** One-click, browser-based cloud environment with Python 3.11, Docker, Jupyter, and Ruff pre-configured.
+- **Production Docker (`Dockerfile` & `docker-compose.yml`):**
+  ```bash
+  docker compose up --build
+  ```
+  Launches:
+  - `applied-ds-ml-api` at `http://localhost:8000` (FastAPI inference engine)
+  - `applied-ds-ml-jupyter` at `http://localhost:8888` (Interactive notebook lab)
 
 ---
 
@@ -125,6 +174,8 @@ By evaluating across candidate thresholds $t \in [0.05, 0.95]$, students discove
 2. **What occurs to the False Positive Rate when we lower the classification decision threshold from $0.50$ to $0.35$? Why does this increase net profit in our case study?**
 3. **Explain the difference between Platt Scaling (sigmoid) and Isotonic Regression in probability calibration.**
 4. **How does pairing continuous LTV regression with binary churn classification prevent marketing budget waste?**
+5. **How does SHAP feature attribution differ from traditional Gini impurity feature importance?**
+6. **When the Population Stability Index (PSI) exceeds 0.25 on production telemetry, what operational steps should an MLOps engineer take?**
 
 ---
-*Happy Modeling! Designed for university coursework, data science bootcamps, and enterprise ML engineering onboarding.*
+*Happy Modeling! Built to empower students, researchers, and recruiters with production-grade ML excellence.*

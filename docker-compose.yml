@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # FastAPI Production Inference Microservice
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: applied-ds-ml-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mlops-network
+
+  # ==========================================
+  # Zero-Setup Containerized Jupyter Lab
+  # ==========================================
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: applied-ds-ml-jupyter
+    ports:
+      - "8888:8888"
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''"]
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - ./src:/app/src
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge

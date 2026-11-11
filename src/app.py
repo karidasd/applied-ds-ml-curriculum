@@ -1,221 +1,119 @@
-"""Production FastAPI Microservice for Churn and Lifetime Value (LTV) Inference.
+"""Production ASGI Application Entrypoint for Customer Retention Microservice.
 
-Exposes RESTful endpoints for real-time customer scoring, batch inference,
-and model health telemetry with Pydantic v2 validation.
+Configures FastAPI lifespan, CORS, telemetry middleware, and mounts API routers.
 """
 
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Literal
 
-import pandas as pd
-from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel, Field
+import joblib
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from src.api import config_registry, model_registry, router
 from src.data_loader import generate_synthetic_subscription_data
 from src.model import CostBenefitThresholdOptimizer, train_churn_model, train_ltv_model
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Global model state
-models: Dict[str, Any] = {}
-threshold_config: Dict[str, float] = {"optimal_threshold": 0.35}
-
-
-class CustomerProfile(BaseModel):
-    """Schema representing an incoming customer record for inference."""
-
-    contract_type: Literal["Month-to-month", "One year", "Two year"] = Field(
-        ..., description="Customer contract billing cycle."
-    )
-    payment_method: Literal["Electronic check", "Mailed check", "Bank transfer", "Credit card"] = (
-        Field(..., description="Payment billing channel.")
-    )
-    internet_service: Literal["Fiber optic", "DSL", "No"] = Field(
-        ..., description="Primary subscription tier."
-    )
-    tenure_months: int = Field(..., ge=0, le=120, description="Subscription tenure in months.")
-    monthly_charges: float = Field(..., ge=10.0, le=500.0, description="Current monthly bill ($).")
-    total_charges: float = Field(
-        ..., ge=0.0, le=50000.0, description="Cumulative historical spend ($)."
-    )
-    num_support_tickets: int = Field(
-        ..., ge=0, le=50, description="Number of support tickets logged."
-    )
-    avg_weekly_logins: float = Field(
-        ..., ge=0.0, le=100.0, description="Average platform logins per week."
-    )
-    usage_drop_pct_last_30d: float = Field(
-        ..., ge=-1.0, le=1.0, description="Percentage change in usage (-1.0 to 1.0)."
-    )
-    has_premium_support: int = Field(
-        ..., ge=0, le=1, description="Binary flag indicating premium SLA support."
-    )
-    multi_seat_license: int = Field(
-        ..., ge=0, le=1, description="Binary flag for enterprise multi-seat access."
-    )
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "contract_type": "Month-to-month",
-                "payment_method": "Electronic check",
-                "internet_service": "Fiber optic",
-                "tenure_months": 8,
-                "monthly_charges": 89.50,
-                "total_charges": 716.00,
-                "num_support_tickets": 4,
-                "avg_weekly_logins": 5.2,
-                "usage_drop_pct_last_30d": 0.45,
-                "has_premium_support": 0,
-                "multi_seat_license": 0,
-            }
-        }
-    }
-
-
-class ChurnPredictionResponse(BaseModel):
-    """Response payload for customer inference."""
-
-    churn_probability: float
-    churn_prediction: int
-    risk_tier: Literal["Low", "Medium", "High", "Critical"]
-    retention_action_recommended: bool
-    decision_threshold_applied: float
-    estimated_lifetime_value: float
-
-
-class BatchInferenceRequest(BaseModel):
-    """Batch scoring request payload."""
-
-    customers: List[CustomerProfile]
-
-
-class BatchInferenceResponse(BaseModel):
-    """Batch scoring response payload."""
-
-    predictions: List[ChurnPredictionResponse]
-    total_customers_scored: int
-
-
-class HealthStatusResponse(BaseModel):
-    """API health check response."""
-
-    status: str
-    models_loaded: List[str]
-    version: str
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for loading or bootstrapping models upon startup."""
+    """Lifespan context manager bootstrapping models and baseline distributions."""
     logger.info("Initializing ML models for inference service...")
     models_dir = Path("models")
-    churn_model_path = models_dir / "churn_pipeline.joblib"
-    ltv_model_path = models_dir / "ltv_pipeline.joblib"
+    churn_path = models_dir / "churn_pipeline.joblib"
+    ltv_path = models_dir / "ltv_pipeline.joblib"
 
-    if churn_model_path.exists() and ltv_model_path.exists():
-        import joblib
-
-        models["churn"] = joblib.load(churn_model_path)
-        models["ltv"] = joblib.load(ltv_model_path)
+    if churn_path.exists() and ltv_path.exists():
+        model_registry["churn"] = joblib.load(churn_path)
+        model_registry["ltv"] = joblib.load(ltv_path)
         logger.info("Loaded persisted models from %s", models_dir.resolve())
     else:
         logger.info("No saved artifacts found. Bootstrapping models on synthetic dataset...")
-        df_sample = generate_synthetic_subscription_data(num_samples=1200, random_state=42)
+        df_sample = generate_synthetic_subscription_data(num_samples=1500, random_state=42)
         X = df_sample.drop(columns=["customer_id", "signup_date", "churn", "customer_ltv"])
         y_churn = df_sample["churn"].values
         y_ltv = df_sample["customer_ltv"].values
 
-        models["churn"] = train_churn_model(X, y_churn, calibrate=True)
-        models["ltv"] = train_ltv_model(X, y_ltv)
+        model_registry["churn"] = train_churn_model(X, y_churn, calibrate=True)
+        model_registry["ltv"] = train_ltv_model(X, y_ltv)
 
         optimizer = CostBenefitThresholdOptimizer(
             intervention_cost=40.0,
             retention_success_prob=0.55,
             average_customer_value=550.0,
         )
-        probs = models["churn"].predict_proba(X)[:, 1]
+        probs = model_registry["churn"].predict_proba(X)[:, 1]
         best_t, _ = optimizer.find_optimal_threshold(y_churn, probs)
-        threshold_config["optimal_threshold"] = best_t
+        config_registry["optimal_threshold"] = best_t
+        config_registry["baseline_features"] = X.copy()
         logger.info("Bootstrapping complete. Optimal threshold set to %.3f", best_t)
 
     yield
     logger.info("Shutting down ML inference service.")
-    models.clear()
+    model_registry.clear()
 
 
 app = FastAPI(
     title="Customer Churn & LTV Scoring API",
-    description="Production-grade ML inference API serving churn probabilities and LTV forecasts.",
-    version="1.0.0",
+    description=(
+        "Production-grade MLOps inference service serving calibrated churn probabilities, "
+        "Customer Lifetime Value (LTV) forecasts, Explainable AI (XAI) feature attributions, "
+        "and data drift monitoring."
+    ),
+    version="2.0.0",
     lifespan=lifespan,
 )
 
-
-def _determine_risk_tier(prob: float) -> Literal["Low", "Medium", "High", "Critical"]:
-    if prob < 0.20:
-        return "Low"
-    elif prob < 0.45:
-        return "Medium"
-    elif prob < 0.70:
-        return "High"
-    return "Critical"
-
-
-def _score_single(profile: CustomerProfile) -> ChurnPredictionResponse:
-    if "churn" not in models or "ltv" not in models:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Models are not initialized.",
-        )
-
-    df_in = pd.DataFrame([profile.model_dump()])
-    churn_prob = float(models["churn"].predict_proba(df_in)[0, 1])
-    ltv_pred = float(models["ltv"].predict(df_in)[0])
-
-    t = threshold_config["optimal_threshold"]
-    prediction = int(churn_prob >= t)
-    risk_tier = _determine_risk_tier(churn_prob)
-    action = bool(churn_prob >= t)
-
-    return ChurnPredictionResponse(
-        churn_probability=round(churn_prob, 4),
-        churn_prediction=prediction,
-        risk_tier=risk_tier,
-        retention_action_recommended=action,
-        decision_threshold_applied=round(t, 4),
-        estimated_lifetime_value=round(max(0.0, ltv_pred), 2),
-    )
+# CORS middleware for modern web/dashboard integrations
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.get("/health", response_model=HealthStatusResponse, tags=["Monitoring"])
-def health_check() -> HealthStatusResponse:
-    """Service health and model readiness probe."""
-    return HealthStatusResponse(
-        status="healthy",
-        models_loaded=list(models.keys()),
-        version="1.0.0",
-    )
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """Measures request processing latency and injects diagnostic headers."""
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time-Sec"] = f"{process_time:.5f}"
+    return response
 
 
-@app.post("/predict", response_model=ChurnPredictionResponse, tags=["Inference"])
-def predict_churn(customer: CustomerProfile) -> ChurnPredictionResponse:
-    """Calculates churn risk probability, decision thresholding, and LTV for a customer."""
-    return _score_single(customer)
+# Mount API Router
+app.include_router(router)
 
 
-@app.post("/predict/batch", response_model=BatchInferenceResponse, tags=["Inference"])
-def predict_batch(batch: BatchInferenceRequest) -> BatchInferenceResponse:
-    """Batch customer inference endpoint for high-volume scoring."""
-    predictions = [_score_single(cust) for cust in batch.customers]
-    return BatchInferenceResponse(
-        predictions=predictions,
-        total_customers_scored=len(predictions),
+@app.get("/", tags=["Root"])
+def root_info() -> JSONResponse:
+    """Root service information and documentation link."""
+    return JSONResponse(
+        content={
+            "service": "Customer Churn & LTV Scoring API",
+            "version": "2.0.0",
+            "status": "online",
+            "documentation": "/docs",
+            "endpoints": [
+                "/predict",
+                "/predict/batch",
+                "/explain",
+                "/telemetry/drift",
+                "/health",
+                "/ready",
+            ],
+        }
     )
 
 
