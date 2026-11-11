@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 520" width="100%" height="100%" style="background:#0f172a; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <defs>
+    <filter id="glowBlue" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="475" y="45" text-anchor="middle" fill="#f8fafc" font-size="22" font-weight="700">Probability Calibration: The Reliability Curve</text>
+  <text x="475" y="72" text-anchor="middle" fill="#94a3b8" font-size="13">Converting uncalibrated tree ensemble scores into true empirical probabilities</text>
+
+  <!-- Chart Area -->
+  <rect x="180" y="100" width="460" height="340" fill="#1e293b" fill-opacity="0.7" rx="10" stroke="#334155" stroke-width="1"/>
+
+  <!-- Gridlines -->
+  <line x1="180" y1="440" x2="640" y2="440" stroke="#475569" stroke-width="1.5"/>
+  <line x1="180" y1="355" x2="640" y2="355" stroke="#334155" stroke-dasharray="4,4"/>
+  <line x1="180" y1="270" x2="640" y2="270" stroke="#334155" stroke-dasharray="4,4"/>
+  <line x1="180" y1="185" x2="640" y2="185" stroke="#334155" stroke-dasharray="4,4"/>
+  <line x1="180" y1="100" x2="640" y2="100" stroke="#334155" stroke-dasharray="4,4"/>
+
+  <!-- Y-Axis Labels -->
+  <text x="165" y="445" text-anchor="end" fill="#64748b" font-size="12">0.0</text>
+  <text x="165" y="360" text-anchor="end" fill="#64748b" font-size="12">0.25</text>
+  <text x="165" y="275" text-anchor="end" fill="#64748b" font-size="12">0.50</text>
+  <text x="165" y="190" text-anchor="end" fill="#64748b" font-size="12">0.75</text>
+  <text x="165" y="105" text-anchor="end" fill="#64748b" font-size="12">1.0</text>
+  <text x="95" y="270" text-anchor="middle" fill="#cbd5e1" font-size="13" font-weight="600" transform="rotate(-90 95 270)">True Empirical Churn Fraction</text>
+
+  <!-- X-Axis Labels -->
+  <text x="180" y="465" text-anchor="middle" fill="#64748b" font-size="12">0.0</text>
+  <text x="295" y="465" text-anchor="middle" fill="#64748b" font-size="12">0.25</text>
+  <text x="410" y="465" text-anchor="middle" fill="#64748b" font-size="12">0.50</text>
+  <text x="525" y="465" text-anchor="middle" fill="#64748b" font-size="12">0.75</text>
+  <text x="640" y="465" text-anchor="middle" fill="#64748b" font-size="12">1.0</text>
+  <text x="410" y="495" text-anchor="middle" fill="#cbd5e1" font-size="13" font-weight="600">Mean Predicted Probability</text>
+
+  <!-- Perfectly Calibrated Diagonal Line -->
+  <line x1="180" y1="440" x2="640" y2="100" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,6"/>
+
+  <!-- Uncalibrated Sigmoidal Curve (Red) -->
+  <!-- (180, 440) -> (240, 420) -> (310, 390) -> (410, 270) -> (530, 140) -> (640, 100) -->
+  <path d="M 180 440 Q 280 435 360 360 T 520 180 T 640 100" fill="none" stroke="#f87171" stroke-width="3"/>
+  <circle cx="360" cy="360" r="5" fill="#ef4444"/>
+  <circle cx="520" cy="180" r="5" fill="#ef4444"/>
+
+  <!-- Calibrated Isotonic Curve (Emerald Cyan) -->
+  <path d="M 180 440 L 250 388 L 320 336 L 410 270 L 490 210 L 560 160 L 640 100" fill="none" stroke="#38bdf8" stroke-width="3.5" filter="url(#glowBlue)"/>
+  <circle cx="250" cy="388" r="5" fill="#38bdf8"/>
+  <circle cx="320" cy="336" r="5" fill="#38bdf8"/>
+  <circle cx="410" cy="270" r="5" fill="#38bdf8"/>
+  <circle cx="490" cy="210" r="5" fill="#38bdf8"/>
+  <circle cx="560" cy="160" r="5" fill="#38bdf8"/>
+
+  <!-- Legend & Explanations Panel -->
+  <rect x="670" y="100" width="250" height="340" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="690" y="130" fill="#f8fafc" font-size="15" font-weight="700">Model Legend</text>
+
+  <!-- Legend Item 1 -->
+  <line x1="690" y1="160" x2="720" y2="160" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,4"/>
+  <text x="730" y="164" fill="#cbd5e1" font-size="12">Perfect Calibration (y = x)</text>
+
+  <!-- Legend Item 2 -->
+  <line x1="690" y1="200" x2="720" y2="200" stroke="#f87171" stroke-width="3"/>
+  <circle cx="705" cy="200" r="4" fill="#ef4444"/>
+  <text x="730" y="196" fill="#fca5a5" font-size="12" font-weight="600">Raw Gradient Boosting</text>
+  <text x="730" y="212" fill="#94a3b8" font-size="11">Underconfident / Distorted</text>
+
+  <!-- Legend Item 3 -->
+  <line x1="690" y1="250" x2="720" y2="250" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="705" cy="250" r="4" fill="#38bdf8"/>
+  <text x="730" y="246" fill="#38bdf8" font-size="12" font-weight="600">Isotonic Calibrated</text>
+  <text x="730" y="262" fill="#94a3b8" font-size="11">Empirical alignment</text>
+
+  <!-- Educational Note Card -->
+  <rect x="685" y="295" width="220" height="125" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1"/>
+  <text x="700" y="320" fill="#38bdf8" font-size="12" font-weight="bold">💡 Student Takeaway:</text>
+  <text x="700" y="342" fill="#e2e8f0" font-size="11">If a model predicts 70% risk,</text>
+  <text x="700" y="360" fill="#e2e8f0" font-size="11">exactly 7 of 10 users must</text>
+  <text x="700" y="378" fill="#e2e8f0" font-size="11">churn. Without calibration,</text>
+  <text x="700" y="396" fill="#e2e8f0" font-size="11">profit formulas fail!</text>
+</svg>

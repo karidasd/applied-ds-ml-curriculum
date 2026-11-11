@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 480" width="100%" height="100%" style="background:#0f172a; font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+  <!-- Title -->
+  <text x="475" y="42" text-anchor="middle" fill="#f8fafc" font-size="22" font-weight="700">Exploratory Telemetry: Churn Rate Drivers &amp; Cohort Risk</text>
+  <text x="475" y="68" text-anchor="middle" fill="#94a3b8" font-size="13">Empirical insights discovered using DuckDB SQL analytical queries</text>
+
+  <!-- PANEL 1: CONTRACT TYPE -->
+  <g transform="translate(60, 95)">
+    <rect width="390" height="340" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="25" y="35" fill="#f8fafc" font-size="16" font-weight="600">Churn Rate by Contract Commitment</text>
+    <text x="25" y="55" fill="#94a3b8" font-size="12">Longer commitments create natural retention moats</text>
+
+    <!-- Bar 1: Month-to-Month -->
+    <text x="25" y="105" fill="#cbd5e1" font-size="13" font-weight="500">Month-to-Month</text>
+    <rect x="25" y="115" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="115" width="280" height="32" rx="6" fill="#ef4444"/>
+    <text x="295" y="136" fill="#ffffff" font-size="13" font-weight="bold">42.5%</text>
+
+    <!-- Bar 2: One Year -->
+    <text x="25" y="180" fill="#cbd5e1" font-size="13" font-weight="500">One-Year Contract</text>
+    <rect x="25" y="190" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="190" width="95" height="32" rx="6" fill="#f59e0b"/>
+    <text x="110" y="211" fill="#ffffff" font-size="13" font-weight="bold">11.8%</text>
+
+    <!-- Bar 3: Two Year -->
+    <text x="25" y="255" fill="#cbd5e1" font-size="13" font-weight="500">Two-Year Contract</text>
+    <rect x="25" y="265" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="265" width="35" height="32" rx="6" fill="#10b981"/>
+    <text x="50" y="286" fill="#ffffff" font-size="13" font-weight="bold">3.2%</text>
+
+    <!-- Callout -->
+    <rect x="25" y="315" width="340" height="1" fill="#334155"/>
+  </g>
+
+  <!-- PANEL 2: USAGE DROP VELOCITY -->
+  <g transform="translate(500, 95)">
+    <rect width="390" height="340" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="25" y="35" fill="#f8fafc" font-size="16" font-weight="600">30-Day Usage Velocity vs Churn</text>
+    <text x="25" y="55" fill="#94a3b8" font-size="12">Behavioral decay acts as a 4-week early warning indicator</text>
+
+    <!-- Bar 1: Critical Drop -->
+    <text x="25" y="105" fill="#fca5a5" font-size="13" font-weight="600">Critical Drop (&gt; 35% usage decline)</text>
+    <rect x="25" y="115" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="115" width="310" height="32" rx="6" fill="#dc2626"/>
+    <text x="325" y="136" fill="#ffffff" font-size="13" font-weight="bold">64.8%</text>
+
+    <!-- Bar 2: Moderate Drop -->
+    <text x="25" y="180" fill="#fde68a" font-size="13" font-weight="500">Moderate Drop (15% - 35% decline)</text>
+    <rect x="25" y="190" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="190" width="165" height="32" rx="6" fill="#f59e0b"/>
+    <text x="180" y="211" fill="#ffffff" font-size="13" font-weight="bold">27.4%</text>
+
+    <!-- Bar 3: Stable / Growth -->
+    <text x="25" y="255" fill="#a7f3d0" font-size="13" font-weight="500">Stable / Active Growth</text>
+    <rect x="25" y="265" width="340" height="32" rx="6" fill="#334155"/>
+    <rect x="25" y="265" width="55" height="32" rx="6" fill="#10b981"/>
+    <text x="70" y="286" fill="#ffffff" font-size="13" font-weight="bold">6.9%</text>
+
+    <!-- Callout -->
+    <rect x="25" y="315" width="340" height="1" fill="#334155"/>
+  </g>
+</svg>
