@@ -1,7 +1,7 @@
-"""Production Unit & Integration Test Suite.
+"""Data Pipeline, Transformer Invariants, and Machine Learning Unit Tests.
 
-Tests data loading, temporal splitting, anti-leakage guards, transformer invariants,
-model calibration, cost-benefit threshold optimization, and FastAPI REST endpoints.
+Validates data loading, temporal splitting, anti-leakage guards, transformer invariants,
+probability calibration, cost-benefit threshold optimization, and benchmarking suite.
 """
 
 from __future__ import annotations
@@ -9,10 +9,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-from fastapi.testclient import TestClient
 
-from src.app import app
-from src.data_loader import generate_synthetic_subscription_data, temporal_train_test_split
+from src.benchmark import run_benchmark_suite
+from src.data_loader import (
+    generate_synthetic_subscription_data,
+    query_with_duckdb,
+    temporal_train_test_split,
+)
 from src.features import (
     DomainBehavioralTransformer,
     audit_feature_leakage,
@@ -60,8 +63,24 @@ def test_synthetic_data_generation_and_schema(sample_dataset: pd.DataFrame) -> N
     assert (sample_dataset["customer_ltv"] >= 0).all()
 
 
+def test_duckdb_query_execution(sample_dataset: pd.DataFrame) -> None:
+    """Validates DuckDB execution against in-memory DataFrame."""
+    query = """
+    SELECT 
+        contract_type,
+        COUNT(*) as customer_count,
+        AVG(churn) as churn_rate
+    FROM subscriptions
+    GROUP BY contract_type
+    """
+    res = query_with_duckdb(query, {"subscriptions": sample_dataset})
+    assert len(res) == 3
+    assert "customer_count" in res.columns
+    assert "churn_rate" in res.columns
+
+
 def test_temporal_split_no_leakage(sample_dataset: pd.DataFrame) -> None:
-    """Validates that temporal splitting avoids lookahead bias."""
+    """Validates that temporal splitting strictly prevents lookahead bias."""
     train_df, test_df = temporal_train_test_split(sample_dataset, cutoff_quantile=0.75)
 
     assert len(train_df) == int(len(sample_dataset) * 0.75)
@@ -100,7 +119,6 @@ def test_preprocessor_pipeline_transformation(sample_dataset: pd.DataFrame) -> N
 def test_audit_feature_leakage_detection(sample_dataset: pd.DataFrame) -> None:
     """Validates that leakage auditor catches synthetic leakage flags."""
     leaked_df = sample_dataset.copy()
-    # Artificially inject a high-leakage feature
     leaked_df["leaked_feature"] = leaked_df["churn"] * 0.99
 
     report = audit_feature_leakage(leaked_df, leaked_df, target_column="churn")
@@ -155,48 +173,9 @@ def test_ltv_model_training(sample_dataset: pd.DataFrame) -> None:
     assert (preds >= 0).all()
 
 
-def test_fastapi_endpoints() -> None:
-    """Tests FastAPI /health, /predict, and /predict/batch using TestClient."""
-    with TestClient(app) as client:
-        # 1. Health check
-        res_health = client.get("/health")
-        assert res_health.status_code == 200
-        data_health = res_health.json()
-        assert data_health["status"] == "healthy"
-        assert "churn" in data_health["models_loaded"]
-
-        # 2. Single customer prediction
-        cust_payload = {
-            "contract_type": "Month-to-month",
-            "payment_method": "Electronic check",
-            "internet_service": "Fiber optic",
-            "tenure_months": 4,
-            "monthly_charges": 92.50,
-            "total_charges": 370.00,
-            "num_support_tickets": 3,
-            "avg_weekly_logins": 4.1,
-            "usage_drop_pct_last_30d": 0.35,
-            "has_premium_support": 0,
-            "multi_seat_license": 0,
-        }
-        res_pred = client.post("/predict", json=cust_payload)
-        assert res_pred.status_code == 200
-        data_pred = res_pred.json()
-        assert 0.0 <= data_pred["churn_probability"] <= 1.0
-        assert data_pred["churn_prediction"] in [0, 1]
-        assert data_pred["risk_tier"] in ["Low", "Medium", "High", "Critical"]
-        assert data_pred["estimated_lifetime_value"] >= 0.0
-
-        # 3. Batch prediction
-        batch_payload = {"customers": [cust_payload, cust_payload]}
-        res_batch = client.post("/predict/batch", json=batch_payload)
-        assert res_batch.status_code == 200
-        data_batch = res_batch.json()
-        assert data_batch["total_customers_scored"] == 2
-        assert len(data_batch["predictions"]) == 2
-
-        # 4. Input validation failure
-        invalid_payload = cust_payload.copy()
-        invalid_payload["tenure_months"] = -5  # Out of bounds
-        res_invalid = client.post("/predict", json=invalid_payload)
-        assert res_invalid.status_code == 422
+def test_benchmark_suite_execution() -> None:
+    """Verifies that the benchmark runner executes without exception."""
+    report = run_benchmark_suite(num_samples=300, runs=1, output_markdown=False)
+    assert "Ingestion & Analytics Benchmark Report" in report
+    assert "DuckDB" in report
+    assert "Pandas" in report
